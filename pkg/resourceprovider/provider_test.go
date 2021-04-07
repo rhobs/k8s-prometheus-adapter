@@ -30,9 +30,9 @@ import (
 	"k8s.io/metrics/pkg/apis/metrics"
 	"sigs.k8s.io/metrics-server/pkg/api"
 
-	config "github.com/directxman12/k8s-prometheus-adapter/cmd/config-gen/utils"
-	prom "github.com/directxman12/k8s-prometheus-adapter/pkg/client"
-	fakeprom "github.com/directxman12/k8s-prometheus-adapter/pkg/client/fake"
+	config "github.com/kubernetes-sigs/prometheus-adapter/cmd/config-gen/utils"
+	prom "github.com/kubernetes-sigs/prometheus-adapter/pkg/client"
+	fakeprom "github.com/kubernetes-sigs/prometheus-adapter/pkg/client/fake"
 	pmodel "github.com/prometheus/common/model"
 )
 
@@ -49,9 +49,9 @@ func restMapper() apimeta.RESTMapper {
 func buildPodSample(namespace, pod, container string, val float64, ts int64) *pmodel.Sample {
 	return &pmodel.Sample{
 		Metric: pmodel.Metric{
-			"namespace":      pmodel.LabelValue(namespace),
-			"pod_name":       pmodel.LabelValue(pod),
-			"container_name": pmodel.LabelValue(container),
+			"namespace": pmodel.LabelValue(namespace),
+			"pod":       pmodel.LabelValue(pod),
+			"container": pmodel.LabelValue(container),
 		},
 		Value:     pmodel.SampleValue(val),
 		Timestamp: pmodel.Time(ts),

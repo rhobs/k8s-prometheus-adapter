@@ -31,9 +31,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
-	config "github.com/directxman12/k8s-prometheus-adapter/cmd/config-gen/utils"
-	prom "github.com/directxman12/k8s-prometheus-adapter/pkg/client"
-	"github.com/directxman12/k8s-prometheus-adapter/pkg/naming"
+	config "github.com/kubernetes-sigs/prometheus-adapter/cmd/config-gen/utils"
+	prom "github.com/kubernetes-sigs/prometheus-adapter/pkg/client"
+	"github.com/kubernetes-sigs/prometheus-adapter/pkg/naming"
 )
 
 // restMapper creates a RESTMapper with just the types we need for
@@ -65,19 +65,19 @@ var seriesRegistryTestSeries = [][]prom.Series{
 	{
 		{
 			Name:   "container_some_time_seconds_total",
-			Labels: pmodel.LabelSet{"pod_name": "somepod", "namespace": "somens", "container_name": "somecont"},
+			Labels: pmodel.LabelSet{"pod": "somepod", "namespace": "somens", "container": "somecont"},
 		},
 	},
 	{
 		{
 			Name:   "container_some_count_total",
-			Labels: pmodel.LabelSet{"pod_name": "somepod", "namespace": "somens", "container_name": "somecont"},
+			Labels: pmodel.LabelSet{"pod": "somepod", "namespace": "somens", "container": "somecont"},
 		},
 	},
 	{
 		{
 			Name:   "container_some_usage",
-			Labels: pmodel.LabelSet{"pod_name": "somepod", "namespace": "somens", "container_name": "somecont"},
+			Labels: pmodel.LabelSet{"pod": "somepod", "namespace": "somens", "container": "somecont"},
 		},
 	},
 	{
@@ -161,7 +161,7 @@ var _ = Describe("Series Registry", func() {
 				resourceNames:  []string{"somepod1", "somepod2"},
 				metricSelector: labels.Everything(),
 
-				expectedQuery: "sum(container_some_usage{namespace=\"somens\",pod_name=~\"somepod1|somepod2\",container_name!=\"POD\"}) by (pod_name)",
+				expectedQuery: "sum(container_some_usage{namespace=\"somens\",pod=~\"somepod1|somepod2\",container!=\"POD\"}) by (pod)",
 			},
 			{
 				title:          "container metrics counter",
@@ -170,7 +170,7 @@ var _ = Describe("Series Registry", func() {
 				resourceNames:  []string{"somepod1", "somepod2"},
 				metricSelector: labels.Everything(),
 
-				expectedQuery: "sum(rate(container_some_count_total{namespace=\"somens\",pod_name=~\"somepod1|somepod2\",container_name!=\"POD\"}[1m])) by (pod_name)",
+				expectedQuery: "sum(rate(container_some_count_total{namespace=\"somens\",pod=~\"somepod1|somepod2\",container!=\"POD\"}[1m])) by (pod)",
 			},
 			{
 				title:          "container metrics seconds counter",
@@ -179,7 +179,7 @@ var _ = Describe("Series Registry", func() {
 				resourceNames:  []string{"somepod1", "somepod2"},
 				metricSelector: labels.Everything(),
 
-				expectedQuery: "sum(rate(container_some_time_seconds_total{namespace=\"somens\",pod_name=~\"somepod1|somepod2\",container_name!=\"POD\"}[1m])) by (pod_name)",
+				expectedQuery: "sum(rate(container_some_time_seconds_total{namespace=\"somens\",pod=~\"somepod1|somepod2\",container!=\"POD\"}[1m])) by (pod)",
 			},
 			// namespaced metrics
 			{

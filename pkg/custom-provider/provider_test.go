@@ -25,10 +25,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	fakedyn "k8s.io/client-go/dynamic/fake"
 
-	config "github.com/directxman12/k8s-prometheus-adapter/cmd/config-gen/utils"
-	prom "github.com/directxman12/k8s-prometheus-adapter/pkg/client"
-	fakeprom "github.com/directxman12/k8s-prometheus-adapter/pkg/client/fake"
-	"github.com/directxman12/k8s-prometheus-adapter/pkg/naming"
+	config "github.com/kubernetes-sigs/prometheus-adapter/cmd/config-gen/utils"
+	prom "github.com/kubernetes-sigs/prometheus-adapter/pkg/client"
+	fakeprom "github.com/kubernetes-sigs/prometheus-adapter/pkg/client/fake"
+	"github.com/kubernetes-sigs/prometheus-adapter/pkg/naming"
 	pmodel "github.com/prometheus/common/model"
 )
 
@@ -45,13 +45,13 @@ func setupPrometheusProvider() (provider.CustomMetricsProvider, *fakeprom.FakePr
 
 	prov, _ := NewPrometheusProvider(restMapper(), fakeKubeClient, fakeProm, namers, fakeProviderUpdateInterval, fakeProviderStartDuration)
 
-	containerSel := prom.MatchSeries("", prom.NameMatches("^container_.*"), prom.LabelNeq("container_name", "POD"), prom.LabelNeq("namespace", ""), prom.LabelNeq("pod_name", ""))
+	containerSel := prom.MatchSeries("", prom.NameMatches("^container_.*"), prom.LabelNeq("container", "POD"), prom.LabelNeq("namespace", ""), prom.LabelNeq("pod", ""))
 	namespacedSel := prom.MatchSeries("", prom.LabelNeq("namespace", ""), prom.NameNotMatches("^container_.*"))
 	fakeProm.SeriesResults = map[prom.Selector][]prom.Series{
 		containerSel: {
 			{
 				Name:   "container_some_usage",
-				Labels: pmodel.LabelSet{"pod_name": "somepod", "namespace": "somens", "container_name": "somecont"},
+				Labels: pmodel.LabelSet{"pod": "somepod", "namespace": "somens", "container": "somecont"},
 			},
 		},
 		namespacedSel: {
