@@ -23,14 +23,16 @@ import (
 	"sync"
 	"text/template"
 
+	pmodel "github.com/prometheus/common/model"
+
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/kubernetes-sigs/custom-metrics-apiserver/pkg/provider"
-	prom "github.com/kubernetes-sigs/prometheus-adapter/pkg/client"
-	"github.com/kubernetes-sigs/prometheus-adapter/pkg/config"
-	pmodel "github.com/prometheus/common/model"
 	"k8s.io/klog/v2"
+
+	"sigs.k8s.io/custom-metrics-apiserver/pkg/provider"
+
+	prom "sigs.k8s.io/prometheus-adapter/pkg/client"
+	"sigs.k8s.io/prometheus-adapter/pkg/config"
 )
 
 var (

@@ -22,9 +22,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/kubernetes-sigs/custom-metrics-apiserver/pkg/provider"
-	"github.com/kubernetes-sigs/custom-metrics-apiserver/pkg/provider/helpers"
 	pmodel "github.com/prometheus/common/model"
+
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -37,8 +36,11 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/metrics/pkg/apis/custom_metrics"
 
-	prom "github.com/kubernetes-sigs/prometheus-adapter/pkg/client"
-	"github.com/kubernetes-sigs/prometheus-adapter/pkg/naming"
+	"sigs.k8s.io/custom-metrics-apiserver/pkg/provider"
+	"sigs.k8s.io/custom-metrics-apiserver/pkg/provider/helpers"
+
+	prom "sigs.k8s.io/prometheus-adapter/pkg/client"
+	"sigs.k8s.io/prometheus-adapter/pkg/naming"
 )
 
 // Runnable represents something that can be run until told to stop.
@@ -136,14 +138,14 @@ func (p *prometheusProvider) metricsFor(valueSet pmodel.Vector, namespace string
 	}, nil
 }
 
-func (p *prometheusProvider) buildQuery(info provider.CustomMetricInfo, namespace string, metricSelector labels.Selector, names ...string) (pmodel.Vector, error) {
+func (p *prometheusProvider) buildQuery(ctx context.Context, info provider.CustomMetricInfo, namespace string, metricSelector labels.Selector, names ...string) (pmodel.Vector, error) {
 	query, found := p.QueryForMetric(info, namespace, metricSelector, names...)
 	if !found {
 		return nil, provider.NewMetricNotFoundError(info.GroupResource, info.Metric)
 	}
 
 	// TODO: use an actual context
-	queryResults, err := p.promClient.Query(context.TODO(), pmodel.Now(), query)
+	queryResults, err := p.promClient.Query(ctx, pmodel.Now(), query)
 	if err != nil {
 		klog.Errorf("unable to fetch metrics from prometheus: %v", err)
 		// don't leak implementation details to the user
@@ -158,9 +160,9 @@ func (p *prometheusProvider) buildQuery(info provider.CustomMetricInfo, namespac
 	return *queryResults.Vector, nil
 }
 
-func (p *prometheusProvider) GetMetricByName(name types.NamespacedName, info provider.CustomMetricInfo, metricSelector labels.Selector) (*custom_metrics.MetricValue, error) {
+func (p *prometheusProvider) GetMetricByName(ctx context.Context, name types.NamespacedName, info provider.CustomMetricInfo, metricSelector labels.Selector) (*custom_metrics.MetricValue, error) {
 	// construct a query
-	queryResults, err := p.buildQuery(info, name.Namespace, metricSelector, name.Name)
+	queryResults, err := p.buildQuery(ctx, info, name.Namespace, metricSelector, name.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +191,7 @@ func (p *prometheusProvider) GetMetricByName(name types.NamespacedName, info pro
 	return p.metricFor(resultValue, name, info, metricSelector)
 }
 
-func (p *prometheusProvider) GetMetricBySelector(namespace string, selector labels.Selector, info provider.CustomMetricInfo, metricSelector labels.Selector) (*custom_metrics.MetricValueList, error) {
+func (p *prometheusProvider) GetMetricBySelector(ctx context.Context, namespace string, selector labels.Selector, info provider.CustomMetricInfo, metricSelector labels.Selector) (*custom_metrics.MetricValueList, error) {
 	// fetch a list of relevant resource names
 	resourceNames, err := helpers.ListObjectNames(p.mapper, p.kubeClient, namespace, selector, info)
 	if err != nil {
@@ -199,7 +201,7 @@ func (p *prometheusProvider) GetMetricBySelector(namespace string, selector labe
 	}
 
 	// construct the actual query
-	queryResults, err := p.buildQuery(info, namespace, metricSelector, resourceNames...)
+	queryResults, err := p.buildQuery(ctx, info, namespace, metricSelector, resourceNames...)
 	if err != nil {
 		return nil, err
 	}
