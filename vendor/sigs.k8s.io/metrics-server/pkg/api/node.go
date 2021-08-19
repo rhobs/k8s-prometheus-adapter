@@ -80,9 +80,8 @@ func (m *nodeMetrics) List(ctx context.Context, options *metainternalversion.Lis
 	}
 	nodes, err := m.nodeLister.List(labelSelector)
 	if err != nil {
-		errMsg := fmt.Errorf("Error while listing nodes for selector %v: %v", labelSelector, err)
-		klog.Error(errMsg)
-		return &metrics.NodeMetricsList{}, errMsg
+		klog.ErrorS(err, "Failed listing nodes", "labelSelector", labelSelector)
+		return &metrics.NodeMetricsList{}, fmt.Errorf("failed listing nodes: %w", err)
 	}
 
 	// maintain the same ordering invariant as the Kube API would over nodes
@@ -92,9 +91,8 @@ func (m *nodeMetrics) List(ctx context.Context, options *metainternalversion.Lis
 
 	metricsItems, err := m.getNodeMetrics(nodes...)
 	if err != nil {
-		errMsg := fmt.Errorf("Error while fetching node metrics for selector %v: %v", labelSelector, err)
-		klog.Error(errMsg)
-		return &metrics.NodeMetricsList{}, errMsg
+		klog.ErrorS(err, "Failed reading nodes metrics", "labelSelector", labelSelector)
+		return &metrics.NodeMetricsList{}, fmt.Errorf("failed reading nodes metrics: %w", err)
 	}
 
 	if options != nil && options.FieldSelector != nil {
@@ -119,26 +117,24 @@ func (m *nodeMetrics) List(ctx context.Context, options *metainternalversion.Lis
 func (m *nodeMetrics) Get(ctx context.Context, name string, opts *metav1.GetOptions) (runtime.Object, error) {
 	node, err := m.nodeLister.Get(name)
 	if err != nil {
-		errMsg := fmt.Errorf("Error while getting node %v: %v", name, err)
-		klog.Error(errMsg)
 		if errors.IsNotFound(err) {
 			// return not-found errors directly
 			return nil, err
 		}
-		return nil, errMsg
+		klog.ErrorS(err, "Failed getting node", "node", klog.KRef("", name))
+		return nil, fmt.Errorf("failed getting node: %w", err)
 	}
 	if node == nil {
 		return nil, errors.NewNotFound(m.groupResource, name)
 	}
 	nodeMetrics, err := m.getNodeMetrics(node)
-	if err == nil && len(nodeMetrics) == 0 {
-		err = fmt.Errorf("no metrics known for node %q", name)
-	}
 	if err != nil {
-		klog.Errorf("unable to fetch node metrics for node %q: %v", name, err)
+		klog.ErrorS(err, "Failed reading node metrics", "node", klog.KRef("", name))
+		return nil, fmt.Errorf("failed reading node metrics: %w", err)
+	}
+	if len(nodeMetrics) == 0 {
 		return nil, errors.NewNotFound(m.groupResource, name)
 	}
-
 	return &nodeMetrics[0], nil
 }
 
@@ -205,7 +201,11 @@ func (m *nodeMetrics) getNodeMetrics(nodes ...*v1.Node) ([]metrics.NodeMetrics, 
 	for i, node := range nodes {
 		names[i] = node.Name
 	}
-	timestamps, usages := m.metrics.GetNodeMetrics(names...)
+	timestamps, usages, err := m.metrics.GetNodeMetrics(names...)
+	if err != nil {
+		return nil, err
+	}
+
 	res := make([]metrics.NodeMetrics, 0, len(names))
 
 	for i, node := range nodes {
