@@ -220,11 +220,10 @@ var _ = Describe("Resource Metrics Provider", func() {
 		}
 
 		By("querying for metrics for some pods")
-		times, metricVals, err := prov.GetPodMetrics(
+		times, metricVals := prov.GetContainerMetrics(
 			types.NamespacedName{Namespace: "some-ns", Name: "pod1"},
 			types.NamespacedName{Namespace: "some-ns", Name: "pod3"},
 		)
-		Expect(err).NotTo(HaveOccurred())
 
 		By("verifying that the reported times for each are the earliest times for each pod")
 		Expect(times).To(Equal([]api.TimeInfo{
@@ -314,8 +313,7 @@ var _ = Describe("Resource Metrics Provider", func() {
 			),
 		}
 		By("querying for metrics for some nodes")
-		times, metricVals, err := prov.GetNodeMetrics("node1", "node2")
-		Expect(err).NotTo(HaveOccurred())
+		times, metricVals := prov.GetNodeMetrics("node1", "node2")
 
 		By("verifying that the reported times for each are the earliest times for each pod")
 		Expect(times).To(Equal([]api.TimeInfo{
