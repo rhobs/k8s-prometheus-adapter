@@ -1,9 +1,7 @@
 component: "Monitoring"
 
 reviewers:
-- paulfantom
 - simonpasquier
-- dgrisonnet
 - raptorsun
 - slashpai
 - prashbnair
@@ -15,9 +13,7 @@ reviewers:
 - jan--f
 
 approvers:
-- paulfantom
 - simonpasquier
-- dgrisonnet
 - raptorsun
 - slashpai
 - prashbnair
@@ -29,6 +25,8 @@ approvers:
 - jan--f
 
 emeritus_approvers:
+- paulfantom
+- dgrisonnet
 - brancz
 - metalmatze
 - pgier
